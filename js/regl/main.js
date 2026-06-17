@@ -23,8 +23,6 @@ const effects = {
 	mirror: makeMirrorPass,
 };
 
-const dimensions = { width: 1, height: 1 };
-
 const loadJS = (src) =>
 	new Promise((resolve, reject) => {
 		const tag = document.createElement("script");
@@ -36,6 +34,8 @@ const loadJS = (src) =>
 
 export default async (canvas, config) => {
 	await Promise.all([loadJS("lib/regl.min.js"), loadJS("lib/gl-matrix.js")]);
+
+	const dimensions = { width: 1, height: 1 };
 
 	const resize = () => {
 		const devicePixelRatio = window.devicePixelRatio ?? 1;
@@ -93,7 +93,8 @@ export default async (canvas, config) => {
 	const targetFrameTimeMilliseconds = 1000 / config.fps;
 	let last = NaN;
 
-	const tick = regl.frame(({ viewportWidth, viewportHeight }) => {
+	let tick;
+	tick = regl.frame(({ viewportWidth, viewportHeight }) => {
 		if (config.once) {
 			tick.cancel();
 		}
@@ -129,4 +130,11 @@ export default async (canvas, config) => {
 			drawToScreen();
 		});
 	});
+
+	return () => {
+		tick.cancel();
+		regl.destroy();
+		window.onresize = null;
+		window.ondblclick = null;
+	};
 };
